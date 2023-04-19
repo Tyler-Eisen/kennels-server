@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers
+from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers, delete_customer, delete_animal, delete_employee, delete_location
 import json
 
 class HandleRequests(BaseHTTPRequestHandler):
@@ -80,6 +80,29 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode())
 
+    def do_DELETE(self):
+    # Set a 204 response code
+     self._set_headers(204)
+
+    # Parse the URL
+     (resource, id) = self.parse_url(self.path)
+
+    # Delete a single animal from the list
+     if resource == "animals":
+         delete_animal(id)
+    
+     elif resource == "customers":
+           delete_customer(id)
+           
+     elif resource == "employees":
+           delete_employee(id)
+           
+     elif resource == "locations":
+           delete_location(id)
+            
+
+    # Encode the new animal and send in response
+     self.wfile.write("".encode())
    
     def do_POST(self):
         """Handles POST requests to the server
