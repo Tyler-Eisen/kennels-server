@@ -1,28 +1,62 @@
-LOCATIONS = [
-    {
-        "id": 1,
-        "name": "Nashville North",
-        "address": "8422 Johnson Pike"
-    },
-    {
-        "id": 2,
-        "name": "Nashville South",
-        "address": "209 Emory Drive"
-    }
-]
+import json
+import sqlite3
+from models import Location
+
+LOCATIONS = []
+
 
 def get_all_locations():
-  return LOCATIONS
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.address
+        FROM location a
+        """)
+
+        
+        locations = []
+
+        
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+
+        
+            location = Location(row['id'], row['name'], row['address'])
+
+            locations.append(location.__dict__) 
+
+    return locations
 
 
 def get_single_location(id):
-    requested_location = None
-  
-    for location in LOCATIONS:
-     if location["id"] == id:
-      requested_location = location
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-    return requested_location
+        
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.address
+        FROM location a
+        WHERE a.id = ?
+        """, ( id, ))
+
+        
+        data = db_cursor.fetchone()
+
+        
+        location = Location(data['id'], data['name'], data['address'],
+                            )
+
+        return location.__dict__
 
 def delete_location(id):
     location_index = -1
