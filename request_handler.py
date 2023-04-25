@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers, delete_customer, delete_animal, delete_employee, delete_location, update_animal, update_customer, update_employee, update_location, get_customer_by_email
+from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers, delete_customer, delete_animal, delete_employee, delete_location, update_animal, update_customer, update_employee, update_location, get_customer_by_email, get_animal_by_location, get_employee_by_location, get_animal_by_status
 import json
 from urllib.parse import urlparse, parse_qs
 
@@ -7,22 +7,21 @@ class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
     def parse_url(self, path):
-       
-        path_params = path.split("/")
+        """Parse the url into the resource and id"""
+        parsed_url = urlparse(path)
+        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
         resource = path_params[1]
-        id = None
 
-        # Try to get the item at index 2
+        if parsed_url.query:
+            query = parse_qs(parsed_url.query)
+            return (resource, query)
+
+        pk = None
         try:
-            # Convert the string "1" to the integer 1
-            # This is the new parseInt()
-            id = int(path_params[2])
-        except IndexError:
-            pass  # No route parameter exists: /animals
-        except ValueError:
-            pass  # Request had trailing slash: /animals/
-
-        return (resource, id)  # This is a tuple
+            pk = int(path_params[2])
+        except (IndexError, ValueError):
+            pass
+        return (resource, pk)
 
     
     def _set_headers(self, status):
@@ -88,13 +87,16 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         else: # There is a ? in the path, run the query param functions
             (resource, query) = parsed
-            print(resource)
-            print(query)
 
             # see if the query dictionary has an email key
             if query.get('email') and resource == 'customers':
                 response = get_customer_by_email(query['email'][0])
-
+            if query.get('location_id') and resource == 'animals':
+                response = get_animal_by_location(query['location_id'][0])
+            if query.get('status') and resource == 'animals':
+                response = get_animal_by_status(query['status'][0])
+            if query.get('location_id') and resource == 'employees':
+                response = get_employee_by_location(query['location_id'][0])
 
         self.wfile.write(json.dumps(response).encode())    
 
@@ -169,20 +171,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-def parse_url(self, path):
-        """Parse the url into the resource and id"""
-        parsed_url = urlparse(path)
-        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
-        resource = path_params[1]
-
-        if parsed_url.query:
-            query = parse_qs(parsed_url.query)
-            return (resource, query)
-
-        pk = None
-        try:
-            pk = int(path_params[2])
-        except (IndexError, ValueError):
-            pass
-        return (resource, pk)
