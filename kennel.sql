@@ -62,7 +62,9 @@ INSERT INTO `Animal` VALUES (null, "Curly", "Treatment", "Poodle", 4, 2);
 SELECT
             a.id,
             a.name,
-            a.address
-        FROM employee a
-        WHERE a.id = ?
+            a.address,
+            a.email,
+            a.password
+        FROM Customer a
+        WHERE a.email = 'bryan@nilsen.com'
         
