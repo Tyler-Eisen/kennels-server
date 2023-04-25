@@ -1,27 +1,27 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers, delete_customer, delete_animal, delete_employee, delete_location, update_animal, update_customer, update_employee, update_location
+from views import get_all_animals, get_single_animal, get_all_locations, get_single_location, get_single_employee, get_all_employees, get_single_customer, get_all_customers, delete_customer, delete_animal, delete_employee, delete_location, update_animal, update_customer, update_employee, update_location, get_customer_by_email, get_animal_by_location, get_employee_by_location, get_animal_by_status
 import json
+from urllib.parse import urlparse, parse_qs
 
 class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
     def parse_url(self, path):
-       
-        path_params = path.split("/")
+        """Parse the url into the resource and id"""
+        parsed_url = urlparse(path)
+        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
         resource = path_params[1]
-        id = None
 
-        # Try to get the item at index 2
+        if parsed_url.query:
+            query = parse_qs(parsed_url.query)
+            return (resource, query)
+
+        pk = None
         try:
-            # Convert the string "1" to the integer 1
-            # This is the new parseInt()
-            id = int(path_params[2])
-        except IndexError:
-            pass  # No route parameter exists: /animals
-        except ValueError:
-            pass  # Request had trailing slash: /animals/
-
-        return (resource, id)  # This is a tuple
+            pk = int(path_params[2])
+        except (IndexError, ValueError):
+            pass
+        return (resource, pk)
 
     
     def _set_headers(self, status):
@@ -48,37 +48,57 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._set_headers(200)
-        response = {}  # Default response
 
-        # Parse the URL and capture the tuple that is returned
-        (resource, id) = self.parse_url(self.path)
+        response = {}
 
-        if resource == "animals":
-            if id is not None:
-                response = get_single_animal(id)
+        # Parse URL and store entire tuple in a variable
+        parsed = self.parse_url(self.path)
 
-            else:
-                response = get_all_animals()
-        elif resource == "locations":
-            if id is not None:
-                response = get_single_location(id)
-                
-            else: response = get_all_locations()
-        
-        elif resource == "employees":
-            if id is not None:
-                response = get_single_employee(id)
-                
-            else: response = get_all_employees()
-        
-        elif resource == "customers":
-            if id is not None:
-                response = get_single_customer(id)
-                
-            else: response = get_all_customers()
-            
+        # If the path does not include a query parameter, continue with the original if block
+        if '?' not in self.path:
+            ( resource, id ) = parsed
 
-        self.wfile.write(json.dumps(response).encode())
+            # It's an if..else statement
+            if resource == "animals":
+                if id is not None:
+                    response = get_single_animal(id)
+
+                else:
+                    response = get_all_animals()
+
+            if resource == "locations":
+                if id is not None:
+                    response = get_single_location(id)
+
+                else:
+                    response = get_all_locations()
+            if resource == "employees":
+                if id is not None:
+                    response = get_single_employee(id)
+
+                else:
+                    response = get_all_employees()
+            if resource == "customers":
+                if id is not None:
+                    response = get_single_customer(id)
+
+                else:
+                    response = get_all_customers()
+
+        else: # There is a ? in the path, run the query param functions
+            (resource, query) = parsed
+
+            # see if the query dictionary has an email key
+            if query.get('email') and resource == 'customers':
+                response = get_customer_by_email(query['email'][0])
+            if query.get('location_id') and resource == 'animals':
+                response = get_animal_by_location(query['location_id'][0])
+            if query.get('status') and resource == 'animals':
+                response = get_animal_by_status(query['status'][0])
+            if query.get('location_id') and resource == 'employees':
+                response = get_employee_by_location(query['location_id'][0])
+
+        self.wfile.write(json.dumps(response).encode())    
 
     def do_DELETE(self):
     # Set a 204 response code
@@ -145,7 +165,7 @@ def main():
     """Starts the server on port 8088 using the HandleRequests class
     """
     host = ''
-    port = 8088
+    port = 8000
     HTTPServer((host, port), HandleRequests).serve_forever()
 
 

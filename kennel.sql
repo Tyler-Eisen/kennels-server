@@ -59,10 +59,8 @@ INSERT INTO `Animal` VALUES (null, "Cleo", "Kennel", "Poodle", 2, 2);
 INSERT INTO `Animal` VALUES (null, "Popcorn", "Kennel", "Beagle", 3, 2);
 INSERT INTO `Animal` VALUES (null, "Curly", "Treatment", "Poodle", 4, 2);
 
-SELECT
-            a.id,
-            a.name,
-            a.address
-        FROM employee a
-        WHERE a.id = ?
+INSERT INTO `Animal` VALUES (null, "Daps", "Kennel", "Boxer", 2, 2);
+INSERT INTO `Animal` VALUES (null, "Snickers", "Recreation", "Dalmation", 4, 1);
+INSERT INTO `Employee` VALUES (null, "Madi Peper", "35498 Madison Ave", 1);
+
         
